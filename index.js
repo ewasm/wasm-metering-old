@@ -66,7 +66,7 @@ function addGasCountBlock (amount, node) {
         value: addGasIndex,
         raw: addGasIndex
       },
-      'expr': [{
+      'exprs': [{
         'kind': 'const',
         'type': 'i32',
         'init': amount
@@ -88,6 +88,7 @@ function injectGasTransform (vertex, startIndex) {
 
 function findGasAndLeaf (vertex, startIndex) {
   const kind = vertex.kind
+  console.log(kind)
   const retVal = {
     gas: kind ? 1 : 0
   }
@@ -102,18 +103,15 @@ function findGasAndLeaf (vertex, startIndex) {
 
   if (kind === 'if') {
     const result = findGasAndLeaf(vertex.edges.get('test'), 0)
-    injectGasTransform(vertex.edges.get('consequent'))
-    injectGasTransform(vertex.edges.get('alternate'))
+    injectGasTransform(vertex.edges.get('then'))
+    injectGasTransform(vertex.edges.get('else'))
     result.gas++
     return result
   }
 
-  // TODO
   if (vertex.isBranch) {
     retVal.branchPoint = true
-      // if if statement slice edges
   }
-  // console.log(vertex)
   // find the first leaf
   if (vertex.isLeaf) {
     retVal.leaf = vertex
@@ -146,6 +144,7 @@ module.exports.injectWAST = (wast) => {
   }
 
   const astJSON = parser.parse(wast)
+  // console.log(JSON.stringify(astJSON, null, 2))
   const transformedJSON = injectJSON(astJSON)
   // console.log(JSON.stringify(transformedJSON, null, 2))
   return codegen.generate(transformedJSON)
@@ -153,11 +152,12 @@ module.exports.injectWAST = (wast) => {
 
 const injectJSON = module.exports.injectJSON = (json) => {
   const astGraph = graph = new Graph(json)
+  console.log(JSON.stringify(graph.toJSON(), null, 2))
   addGasIndex = astGraph.importTable.length
   addImport(astGraph)
   const funcs = astGraph.edges.get('body').edges.get(0).edges.get('body')
   for (const func of funcs.edges) {
-    if(func[1].kind === 'func') {
+    if (func[1].kind === 'func') {
       injectGasTransform(func[1], addGasIndex)
     }
   }
