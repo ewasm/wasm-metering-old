@@ -56,22 +56,23 @@ function addImport (rootNode) {
 
 function addGasCountBlock (amount, node) {
 
+  const call_import = {
+    'kind': 'call_import',
+    'id': {
+      kind: 'literal',
+      value: addGasIndex,
+      raw: addGasIndex
+    },
+    'exprs': [{
+      'kind': 'const',
+      'type': 'i32',
+      'init': amount
+    }]
+  }
   const blockJSON = {
     'kind': 'block',
     'id': null,
-    'body': [{
-      'kind': 'call_import',
-      'id': {
-        kind: 'literal',
-        value: addGasIndex,
-        raw: addGasIndex
-      },
-      'exprs': [{
-        'kind': 'const',
-        'type': 'i32',
-        'init': amount
-      }]
-    }]
+    'body': [call_import]
   }
 
   const leaf = node.copy()
@@ -81,14 +82,18 @@ function addGasCountBlock (amount, node) {
 }
 
 function injectGasTransform (vertex, startIndex) {
-  startIndex = startIndex ? 0 : startIndex
+  startIndex = startIndex ? startIndex : 0
   const result = findGasAndLeaf(vertex, startIndex)
-  addGasCountBlock(result.gas, result.leaf)
+  // console.log('result')
+  if (result.leaf) {
+    // console.log('inject leaf')
+    addGasCountBlock(result.gas, result.leaf)
+  }
 }
 
 function findGasAndLeaf (vertex, startIndex) {
   const kind = vertex.kind
-  console.log(kind)
+  // console.log(kind)
   const retVal = {
     gas: kind ? 1 : 0
   }
@@ -101,6 +106,10 @@ function findGasAndLeaf (vertex, startIndex) {
     return {gas: 1}
   }
 
+  if (kind === 'identifier') {
+    return {gas: 0}
+  }
+
   if (kind === 'if') {
     const result = findGasAndLeaf(vertex.edges.get('test'), 0)
     injectGasTransform(vertex.edges.get('then'))
@@ -109,36 +118,39 @@ function findGasAndLeaf (vertex, startIndex) {
     return result
   }
 
-  if (vertex.isBranch) {
-    retVal.branchPoint = true
-  }
   // find the first leaf
   if (vertex.isLeaf) {
     retVal.leaf = vertex
   } else {
     const edges = [...vertex.edges].slice(startIndex)
+    // console.log(edges)
     for (const node of edges) {
       const result = findGasAndLeaf(node[1], 0)
-      if (result.branchPoint && vertex.isLabled) {
+      // console.log(result)
+      retVal.branchPoint = result.branchPoint
+      retVal.gas += result.gas
+      if (result.branchPoint && vertex.value.array) {
+        // console.log('break!!!')
         // found a new subtree
-        injectGasTransform(vertex, node[0])
-        // resest the gas count
-        return {
-          gas: 0,
-          branchPoint: true
-        }
+        injectGasTransform(vertex, node[0] + 1)
+        return retVal
       } else {
-        retVal.gas += result.gas
         if (!retVal.leaf) {
           retVal.leaf = result.leaf
         }
       }
     }
   }
+
+  if (vertex.isBranch) {
+    retVal.branchPoint = true
+  }
+  // console.log(vertex)
+  console.log(kind + ' ' + retVal.gas + ' ')
   return retVal
 }
 
-module.exports.injectWAST = (wast) => {
+module.exports.injectWAST = (wast, spacing) => {
   if (typeof wast !== 'string') {
     wast = wast.toString()
   }
@@ -147,12 +159,12 @@ module.exports.injectWAST = (wast) => {
   // console.log(JSON.stringify(astJSON, null, 2))
   const transformedJSON = injectJSON(astJSON)
   // console.log(JSON.stringify(transformedJSON, null, 2))
-  return codegen.generate(transformedJSON)
+  return codegen.generate(transformedJSON, spacing)
 }
 
 const injectJSON = module.exports.injectJSON = (json) => {
   const astGraph = graph = new Graph(json)
-  console.log(JSON.stringify(graph.toJSON(), null, 2))
+  // console.log(JSON.stringify(graph.toJSON(), null, 2))
   addGasIndex = astGraph.importTable.length
   addImport(astGraph)
   const funcs = astGraph.edges.get('body').edges.get(0).edges.get('body')
