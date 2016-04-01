@@ -21,10 +21,8 @@
 'use strict'
 const parser = require('wast-parser')
 const codegen = require('wast-codegen')
-const Graph = require('wast-graph')
+const AST = require('wast-graph')
 let graph
-
-// const branchConditions = new Set(['if', 'br'])
 let addGasIndex
 
 function addImport (rootNode) {
@@ -48,14 +46,13 @@ function addImport (rootNode) {
     }]
   }
 
-  const body = rootNode.edges.get('body')
+  const body = rootNode.get('body')
   for (let item of body.edges) {
-    item[1].edges.get('body').push(json)
+    item[1].get('body').push(json)
   }
 }
 
-function addGasCountBlock (amount, node) {
-
+function addGasCountBlock (amount, node, index) {
   const call_import = {
     'kind': 'call_import',
     'id': {
@@ -69,35 +66,34 @@ function addGasCountBlock (amount, node) {
       'init': amount
     }]
   }
-  const blockJSON = {
-    'kind': 'block',
-    'id': null,
-    'body': [call_import]
-  }
-
-  const leaf = node.copy()
-  node.parse(blockJSON)
-  const body = node.getEdge('body')
-  body.push(leaf)
+  const body = node.value.array ? node : node.get('body')
+  body.insertAt(index, call_import)
 }
 
 function injectGasTransform (vertex, startIndex) {
   startIndex = startIndex ? startIndex : 0
-  const result = findGasAndLeaf(vertex, startIndex)
-  // console.log('result')
-  if (result.leaf) {
-    // console.log('inject leaf')
-    addGasCountBlock(result.gas, result.leaf)
+  const result = calcGas(vertex, startIndex)
+  if (result.gas) {
+    addGasCountBlock(result.gas, vertex, startIndex)
   }
 }
 
-function findGasAndLeaf (vertex, startIndex) {
+function calcGas (vertex, startIndex) {
   const kind = vertex.kind
   // console.log(kind)
   const retVal = {
     gas: kind ? 1 : 0
   }
 
+  if (kind === 'then') {
+    retVal.gas = 0
+  }
+
+  if (kind === 'else') {
+    retVal.gas = 0
+  }
+
+  // console.log(kind)
   if (kind === 'param') {
     return {gas: 1}
   }
@@ -110,34 +106,50 @@ function findGasAndLeaf (vertex, startIndex) {
     return {gas: 0}
   }
 
+  if (kind === 'literal') {
+    return {gas: 0}
+  }
+
   if (kind === 'if') {
-    const result = findGasAndLeaf(vertex.edges.get('test'), 0)
-    injectGasTransform(vertex.edges.get('then'))
-    injectGasTransform(vertex.edges.get('else'))
+    const result = calcGas(vertex.edges.get('test'), 0)
+    let then = vertex.get('then')
+    let els = vertex.get('else')
+    if (then.kind !== 'then' && then.kind !== 'block') {
+      const statement = then.copy()
+      then = new AST('then')
+      then.get('body').unshift(statement)
+      vertex.set('then', then)
+    }else if (els && els.kind !== 'else' && then.kind !== 'block') {
+      const statement = els.copy()
+      els = new AST('else')
+      els.get('body').unshift(statement)
+      vertex.set('else', els)
+    }
+
+    injectGasTransform(then)
+    if (els) {
+      injectGasTransform(els)
+    }
     result.gas++
     return result
   }
 
-  // find the first leaf
-  if (vertex.isLeaf) {
-    retVal.leaf = vertex
-  } else {
-    const edges = [...vertex.edges].slice(startIndex)
-    // console.log(edges)
-    for (const node of edges) {
-      const result = findGasAndLeaf(node[1], 0)
-      // console.log(result)
-      retVal.branchPoint = result.branchPoint
-      retVal.gas += result.gas
-      if (result.branchPoint && vertex.value.array) {
-        // console.log('break!!!')
-        // found a new subtree
-        injectGasTransform(vertex, node[0] + 1)
-        return retVal
-      } else {
-        if (!retVal.leaf) {
-          retVal.leaf = result.leaf
-        }
+  const edges = [...vertex.edges].slice(startIndex)
+  // console.log(edges)
+  for (const node of edges) {
+    // console.log(node)
+    const result = calcGas(node[1], 0)
+    // console.log(result)
+    retVal.branchPoint = result.branchPoint
+    retVal.gas += result.gas
+    if (result.branchPoint && vertex.value.array) {
+      // console.log('break!!!')
+      // found a new subtree
+      injectGasTransform(vertex, node[0] + 1)
+      return retVal
+    } else {
+      if (!retVal.leaf) {
+        retVal.leaf = result.leaf
       }
     }
   }
@@ -146,7 +158,7 @@ function findGasAndLeaf (vertex, startIndex) {
     retVal.branchPoint = true
   }
   // console.log(vertex)
-  console.log(kind + ' ' + retVal.gas + ' ')
+  // console.log(kind + ' ' + retVal.gas + ' ' + vertex.isLeaf)
   return retVal
 }
 
@@ -163,7 +175,7 @@ module.exports.injectWAST = (wast, spacing) => {
 }
 
 const injectJSON = module.exports.injectJSON = (json) => {
-  const astGraph = graph = new Graph(json)
+  const astGraph = graph = new AST(json)
   // console.log(JSON.stringify(graph.toJSON(), null, 2))
   addGasIndex = astGraph.importTable.length
   addImport(astGraph)
