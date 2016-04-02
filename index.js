@@ -22,137 +22,127 @@
 const parser = require('wast-parser')
 const codegen = require('wast-codegen')
 const AST = require('wast-graph')
-let addGasIndex
+let addGasIndex // a messy global
 
+// adds the import statement for the Ethereum system module
+// '(import "ethereum" "gasAdd" (param i32))'
 function addImport (rootNode) {
   const json = {
-    'kind': 'import',
-    'modName': {
+    kind: 'import',
+    modName: {
       kind: 'literal',
       value: 'ethereum'
     },
-    'funcName': {
+    funcName: {
       kind: 'literal',
       value: 'gasAdd'
     },
-    'type': null,
-    'params': [{
-      'kind': 'param',
-      'items': [{
-        'kind': 'item',
-        'type': 'i32'
+    type: null,
+    params: [{
+      kind: 'param',
+      items: [{
+        kind: 'item',
+        type: 'i32'
       }]
     }]
   }
 
+  // we are assuming the root node is "script"
   const body = rootNode.get('body')
+  // the body of the root
   for (let item of body.edges) {
+    // each item in the body of a script should be a "module"
     item[1].get('body').push(json)
   }
 }
 
+// adds a gas counting statement to a node
+// (call_import <addGasindex> (i32.const <amount>))
 function addGasCountBlock (amount, node, index) {
   const call_import = {
-    'kind': 'call_import',
-    'id': {
+    kind: 'call_import',
+    id: {
       kind: 'literal',
       value: addGasIndex,
       raw: addGasIndex
     },
-    'exprs': [{
-      'kind': 'const',
-      'type': 'i32',
-      'init': amount
+    exprs: [{
+      kind: 'const',
+      type: 'i32',
+      init: amount
     }]
   }
   const body = node.value.array ? node : node.get('body')
   body.insertAt(index, call_import)
 }
 
-function injectGasTransform (vertex, startIndex) {
+// injects metering into an AST
+function meteringTransform (vertex, startIndex) {
   startIndex = startIndex ? startIndex : 0
+  // find the gas
   const result = calcGas(vertex, startIndex)
   if (result.gas) {
+    // inject the metering statement
     addGasCountBlock(result.gas, vertex, startIndex)
   }
 }
 
+// travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  const retVal = {
-    gas: kind ? 1 : 0
-  }
-
-  if (kind === 'then') {
-    retVal.gas = 0
-  }
-
-  if (kind === 'else') {
-    retVal.gas = 0
-  }
-
-  if (kind === 'identifier') {
-    return {gas: 0}
-  }
-
-  if (kind === 'literal') {
-    return {gas: 0}
-  }
-
-  if (kind === 'param') {
-    return {gas: 1}
-  }
-
-  if (kind === 'result') {
-    return {gas: 1}
-  }
+  const dontCount = new Set(['identifier', 'literal', 'param', 'then', 'else', null])
 
   if (kind === 'if') {
-    const result = calcGas(vertex.edges.get('test'), 0)
+    // splits a if statement into two subtrees (then and else)
     let then = vertex.get('then')
     let els = vertex.get('else')
     if (then.kind !== 'then' && then.kind !== 'block') {
+      // adds a `then` block that already exist implicitly
       const statement = then.copy()
       then = new AST('then')
       then.get('body').unshift(statement)
       vertex.set('then', then)
-    }else if (els && els.kind !== 'else' && then.kind !== 'block') {
+    } else if (els && els.kind !== 'else' && then.kind !== 'block') {
+      // adds an `else` block that already exist implicitly
       const statement = els.copy()
       els = new AST('else')
       els.get('body').unshift(statement)
       vertex.set('else', els)
     }
-
-    injectGasTransform(then)
+    meteringTransform(then)
     if (els) {
-      injectGasTransform(els)
+      meteringTransform(els)
     }
+
+    // calculates the gas for the test statement
+    const result = calcGas(vertex.edges.get('test'), 0)
     result.gas++
     return result
-  }
-
-  const edges = [...vertex.edges].slice(startIndex)
-  for (const node of edges) {
-    const result = calcGas(node[1], 0)
-    retVal.branchPoint = result.branchPoint
-    retVal.gas += result.gas
-    if (result.branchPoint && vertex.value.array) {
-      // found a new subtree
-      injectGasTransform(vertex, node[0] + 1)
-      return retVal
-    } else {
-      if (!retVal.leaf) {
-        retVal.leaf = result.leaf
+  } else {
+    const retVal = {
+      gas: ~~!dontCount.has(kind),
+      branchPoint: vertex.isBranch
+    }
+    const edges = [...vertex.edges].slice(startIndex)
+    for (const node of edges) {
+      const result = calcGas(node[1], 0)
+      retVal.branchPoint |= result.branchPoint
+      retVal.gas += result.gas
+      if (result.branchPoint && vertex.value.array) {
+        // found a new subtree
+        meteringTransform(vertex, node[0] + 1)
+        return retVal
       }
     }
+    return retVal
   }
-
-  if (vertex.isBranch) {
-    retVal.branchPoint = true
-  }
-  return retVal
 }
 
+/**
+ * Inject metering into wasm text
+ * @param {sting} wast code in the wasm text format
+ * @param {integer} spacing the number of spaces for the indentation
+ */
 module.exports.injectWAST = (wast, spacing) => {
   if (typeof wast !== 'string') {
     wast = wast.toString()
@@ -163,14 +153,19 @@ module.exports.injectWAST = (wast, spacing) => {
   return codegen.generate(transformedJSON, spacing)
 }
 
+/**
+ * Injects metering into the json ast
+ * @param {object} json
+ */
 const injectJSON = module.exports.injectJSON = (json) => {
   const astGraph = new AST(json)
   addGasIndex = astGraph.importTable.length
   addImport(astGraph)
+  // finds all the function in a module
   const funcs = astGraph.edges.get('body').edges.get(0).edges.get('body')
   for (const func of funcs.edges) {
     if (func[1].kind === 'func') {
-      injectGasTransform(func[1], addGasIndex)
+      meteringTransform(func[1])
     }
   }
   return astGraph.toJSON()
