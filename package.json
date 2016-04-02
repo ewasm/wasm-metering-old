@@ -12,7 +12,7 @@
   "author": "mjbecze <mjbecze@riseup.net>",
   "license": "GPL",
   "dependencies": {
-    "wast-codegen": "git+ssh://git@github.com/drom/wast-codegen.git",
+    "wast-codegen": "git+https://github.com/drom/wast-codegen.git",
     "wast-graph": "^1.1.0",
     "wast-parser": "^0.17.0",
     "yargs": "^4.3.1"
