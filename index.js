@@ -127,6 +127,8 @@ function calcGas (vertex, startIndex) {
       branchPoint: vertex.isBranch
     }
     const edges = [...vertex.edges].slice(startIndex)
+    // iterates the wasm statements and creates new sub-tree when branch
+    // conditions are found
     for (const node of edges) {
       const result = calcGas(node[1], 0)
       retVal.branchPoint |= result.branchPoint
