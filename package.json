@@ -1,0 +1,21 @@
+{
+  "name": "wasm-metering",
+  "version": "0.0.0",
+  "description": "This is a prototype that injects metering into wasm code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mjbecze <mjbecze@riseup.net>",
+  "license": "GPL",
+  "dependencies": {
+    "functional-dag": "^1.1.0",
+    "generic-digraph": "^2.3.0",
+    "wast-codegen": "^0.1.0",
+    "wast-parser": "^0.12.0",
+    "yargs": "^4.3.1"
+  },
+  "devDependencies": {
+    "tape": "^4.5.1"
+  }
+}

@@ -11,9 +11,9 @@
  *
  *
  * TODO
- * [] fix breaks
- *    [] test on spec
- *    [] inject at leafs
+ * [*] fix breaks
+ *    [*] inject at leafs
+ * [*] fix select
  * [] run test suite
  * [] add memory count
  *   [] define count func
@@ -22,7 +22,6 @@
 const parser = require('wast-parser')
 const codegen = require('wast-codegen')
 const AST = require('wast-graph')
-let graph
 let addGasIndex
 
 function addImport (rootNode) {
@@ -80,7 +79,6 @@ function injectGasTransform (vertex, startIndex) {
 
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  // console.log(kind)
   const retVal = {
     gas: kind ? 1 : 0
   }
@@ -93,21 +91,20 @@ function calcGas (vertex, startIndex) {
     retVal.gas = 0
   }
 
-  // console.log(kind)
-  if (kind === 'param') {
-    return {gas: 1}
-  }
-
-  if (kind === 'result') {
-    return {gas: 1}
-  }
-
   if (kind === 'identifier') {
     return {gas: 0}
   }
 
   if (kind === 'literal') {
     return {gas: 0}
+  }
+
+  if (kind === 'param') {
+    return {gas: 1}
+  }
+
+  if (kind === 'result') {
+    return {gas: 1}
   }
 
   if (kind === 'if') {
@@ -135,15 +132,11 @@ function calcGas (vertex, startIndex) {
   }
 
   const edges = [...vertex.edges].slice(startIndex)
-  // console.log(edges)
   for (const node of edges) {
-    // console.log(node)
     const result = calcGas(node[1], 0)
-    // console.log(result)
     retVal.branchPoint = result.branchPoint
     retVal.gas += result.gas
     if (result.branchPoint && vertex.value.array) {
-      // console.log('break!!!')
       // found a new subtree
       injectGasTransform(vertex, node[0] + 1)
       return retVal
@@ -157,8 +150,6 @@ function calcGas (vertex, startIndex) {
   if (vertex.isBranch) {
     retVal.branchPoint = true
   }
-  // console.log(vertex)
-  // console.log(kind + ' ' + retVal.gas + ' ' + vertex.isLeaf)
   return retVal
 }
 
@@ -168,15 +159,12 @@ module.exports.injectWAST = (wast, spacing) => {
   }
 
   const astJSON = parser.parse(wast)
-  // console.log(JSON.stringify(astJSON, null, 2))
   const transformedJSON = injectJSON(astJSON)
-  // console.log(JSON.stringify(transformedJSON, null, 2))
   return codegen.generate(transformedJSON, spacing)
 }
 
 const injectJSON = module.exports.injectJSON = (json) => {
-  const astGraph = graph = new AST(json)
-  // console.log(JSON.stringify(graph.toJSON(), null, 2))
+  const astGraph = new AST(json)
   addGasIndex = astGraph.importTable.length
   addImport(astGraph)
   const funcs = astGraph.edges.get('body').edges.get(0).edges.get('body')
