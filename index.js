@@ -73,7 +73,7 @@ function addGasCountBlock (amount, node, index) {
       init: amount
     }]
   }
-  const body = node.value.array ? node : node.get('body')
+  const body = node.kind === 'array' ? node : node.get('body')
   body.insertAt(index, call_import)
 }
 
@@ -93,7 +93,7 @@ function meteringTransform (vertex, startIndex) {
 // travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  const dontCount = new Set(['identifier', 'literal', 'param', 'then', 'else', null])
+  const dontCount = new Set(['identifier', 'literal', 'param', 'then', 'else', 'array'])
 
   if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
@@ -131,7 +131,7 @@ function calcGas (vertex, startIndex) {
       const result = calcGas(node[1], 0)
       retVal.branchPoint |= result.branchPoint
       retVal.gas += result.gas
-      if (result.branchPoint && vertex.value.array) {
+      if (result.branchPoint && vertex.kind === 'array') {
         // found a new subtree
         meteringTransform(vertex, node[0] + 1)
         return retVal
