@@ -2,7 +2,7 @@
  *
  * Metering is done by summing the "contunois" subtrees of the AST
  * Countunous := no break or return conditions
- * if a break condition happens in a block then the block can be though of 
+ * if a break condition happens in a block then the block can be though of
  * as two sperate subtrees
  *
  * 1) if br's are found inject `addGas` in the next insertion point
@@ -48,11 +48,12 @@ function addImport (rootNode) {
   }
 
   // we are assuming the root node is "script"
+  // find the `module`s and inject the import
   const body = rootNode.get('body')
-  // the body of the root
   for (let item of body.edges) {
-    // each item in the body of a script should be a "module"
-    item[1].get('body').push(json)
+    if (item[1].kind === 'module') {
+      item[1].get('body').push(json)
+    }
   }
 }
 
@@ -78,7 +79,9 @@ function addGasCountBlock (amount, node, index) {
 
 // injects metering into an AST
 function meteringTransform (vertex, startIndex) {
-  startIndex = startIndex ? startIndex : 0
+  if (startIndex === undefined) {
+    startIndex = 0
+  }
   // find the gas
   const result = calcGas(vertex, startIndex)
   if (result.gas) {
@@ -102,7 +105,7 @@ function calcGas (vertex, startIndex) {
       then = new AST('then')
       then.get('body').unshift(statement)
       vertex.set('then', then)
-    } else if (els && els.kind !== 'else' && then.kind !== 'block') {
+    } else if (els && els.kind !== 'else' && els.kind !== 'block') {
       // adds an `else` block that already exist implicitly
       const statement = els.copy()
       els = new AST('else')
