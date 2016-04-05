@@ -119,6 +119,54 @@ tape('if_else', function (t) {
   t.end()
 })
 
+tape('imports', function (t) {
+  const testWast =
+`(module
+  (import $print "spectest" "print" (param i32))
+  (func
+    (block $zero ;; +1
+      (block $one ;; +1
+        (block $two ;; +1
+          (br 0) ;; +1
+          (unreachable)) ;; +1
+        ;; block $one
+        (call_import $print (i32.const 1)) ;; +2
+        (nop)) ;; +1
+      ;; block $zero
+      (call_import $print (i32.const 2))) ;; +2
+    ) ;; end of fun
+)`
+
+  const expected =
+`(module
+  (import $print "spectest" "print"
+    (param i32))
+  (func
+    (call_import 1
+      (i32.const 5))
+    (block $zero
+      (block $one
+        (block $two
+          (br 0)
+          (call_import 1
+            (i32.const 1))
+          (unreachable))
+        (call_import 1
+          (i32.const 3))
+        (call_import $print
+          (i32.const 1))
+        (nop))
+      (call_import 1
+        (i32.const 2))
+      (call_import $print
+        (i32.const 2))))
+  (import "ethereum" "gasAdd"
+    (param i32)))`
+  const result = injector.injectWAST(testWast, 2)
+  t.equals(result, expected)
+  t.end()
+})
+
 tape('br_table', function (t) {
   const testWast =
   `(module (func $stmt (param $i i32) (result i32)
