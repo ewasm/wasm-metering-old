@@ -169,21 +169,21 @@ tape('imports', function (t) {
 
 tape('br_table', function (t) {
   const testWast =
-  `(module (func $stmt (param $i i32) (result i32)
-    (local $j i32)
-    (set_local $j (i32.const 100))
-    (block $switch
-      (block $7
-        (block $default
-          (block $6
-            (block $5
-              (block $4
-                (block $3
-                  (block $2
-                    (block $1
-                      (block $0
-                        (br_table $0 $1 $2 $3 $4 $5 $6 $7 $default
-                          (get_local $i)
+  `(module (func $stmt (param $i i32) (result i32) ;; +3
+    (local $j i32) ;; 4
+    (set_local $j (i32.const 100)) ;; 6
+    (block $switch ;; 7
+      (block $7 ;; 8
+        (block $default ;; 9
+          (block $6 ;; 10
+            (block $5 ;; 11
+              (block $4 ;; 12
+                (block $3 ;; 13
+                  (block $2 ;;14
+                    (block $1 ;;15
+                      (block $0 ;;16
+                        (br_table $0 $1 $2 $3 $4 $5 $6 $7 $default ;; 17
+                          (get_local $i) ;;18
                         )
                       ) ;; 0
                       (return (get_local $i))
@@ -218,7 +218,7 @@ tape('br_table', function (t) {
     (result i32)
     (local $j i32)
     (call_import 0
-      (i32.const 17))
+      (i32.const 18))
     (set_local $j
       (i32.const 100))
     (block $switch

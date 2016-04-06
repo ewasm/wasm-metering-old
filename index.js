@@ -93,7 +93,7 @@ function meteringTransform (vertex, startIndex) {
 // travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  const dontCount = new Set(['identifier', 'literal', 'param', 'then', 'else', 'array'])
+  const dontCount = new Set(['local', 'identifier', 'literal', 'param', 'then', 'else', 'array'])
 
   if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
@@ -126,6 +126,7 @@ function calcGas (vertex, startIndex) {
       gas: ~~!dontCount.has(kind),
       branchPoint: vertex.isBranch
     }
+
     const edges = [...vertex.edges].slice(startIndex)
     // iterates the wasm statements and creates new sub-tree when branch
     // conditions are found
