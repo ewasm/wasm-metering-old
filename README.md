@@ -5,7 +5,7 @@
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)  
 
-This injects metering into wasm's ast. Metered code is code that counts how many steps it has run. The meter counting should be done in a protected location. Here we use `(import "ethereum" "addGas" (param i32))` This assume that the ffi will provide an `addGas` function.
+This injects metering into wasm's ast. Metered code is code that counts how many steps it has run. The meter counting should be done in a protected location. Here we use `(import "ethereum" "addGas" (param i32))` This assume that the ffi will provide an `addGas` function. For a full description of how this works see [Metering in eWASM](https://github.com/ethereum/evm2.0-design/blob/master/metering.md)
 
 # USAGE
 
