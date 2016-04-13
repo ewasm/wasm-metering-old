@@ -17,7 +17,7 @@ const wast =
     (if (i64.eq (get_local 0) (i64.const 0))
       (i64.const 1))))`
 
-const result = metering.injectWAST(testWast, 2)
+const result = metering.injectWAST(wast, 2)
 console.log(result)
 
 /**
