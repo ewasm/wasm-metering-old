@@ -47,9 +47,9 @@ then invoke
 # API
 ## injectJSON
 
-[index.js:161-173](https://github.com/wanderer/wasm-metering/blob/6f715c5a21c0413521d5da5598a66378ce50c166/index.js#L161-L173 "Source code on GitHub")
+[index.js:169-181](https://github.com/wanderer/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L169-L181 "Source code on GitHub")
 
-Injects metering into a [json ast](https://github.com/drom/wast-spec)
+Injects metering into the json ast
 
 **Parameters**
 
@@ -57,7 +57,7 @@ Injects metering into a [json ast](https://github.com/drom/wast-spec)
 
 ## injectWAST
 
-[index.js:147-155](https://github.com/wanderer/wasm-metering/blob/6f715c5a21c0413521d5da5598a66378ce50c166/index.js#L147-L155 "Source code on GitHub")
+[index.js:155-163](https://github.com/wanderer/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L155-L163 "Source code on GitHub")
 
 Inject metering into wasm text
 
@@ -65,6 +65,7 @@ Inject metering into wasm text
 
 -   `wast` **sting** code in the wasm text format
 -   `spacing` **integer** the number of spaces for the indentation
+
 
 # LICENSE
 [MPL-2.0](https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2))
