@@ -148,8 +148,6 @@ tape('imports', function (t) {
       (block $one
         (block $two
           (br 0)
-          (call_import 1
-            (i32.const 1))
           (unreachable))
         (call_import 1
           (i32.const 3))
@@ -274,3 +272,47 @@ tape('br_table', function (t) {
   t.equals(result, expected)
   t.end()
 })
+
+tape('for with break', function (t) {
+  const testWast =
+`(module
+  (import $gasUsed  "ethereum" "gasUsed"  (result i64))
+  (export "test" 0)
+  (func (result i32) ;; +2
+    (block ;; +1
+      (if ;; +1
+        (i64.eq ;; +1
+          (call_import $gasUsed) ;; +1
+          (i64.const 8)) ;; +2
+        (br 1) ;; +1
+      )
+      (i64.const 6))))`
+
+  const resultWast =
+`(module
+  (import $gasUsed "ethereum" "gasUsed")
+  (export "test" 0)
+  (func
+    (result i32)
+    (call_import 1
+      (i32.const 7))
+    (block
+      (if
+        (i64.eq
+          (call_import $gasUsed)
+          (i64.const 8))
+        (then
+          (call_import 1
+            (i32.const 1))
+          (br 1)))
+      (call_import 1
+        (i32.const 1))
+      (i64.const 6)))
+  (import "ethereum" "gasAdd"
+    (param i32)))`
+
+  const result = injector.injectWAST(testWast, 2)
+  t.equals(result, resultWast)
+  t.end()
+})
+

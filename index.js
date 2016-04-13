@@ -9,7 +9,6 @@
  *  insertion point is beging of next block
  *  or the adding or encapsolation the last statment
  *
- *
  * TODO
  * [*] fix breaks
  *    [*] inject at leafs
@@ -17,6 +16,12 @@
  * [] run test suite
  * [] add memory count
  *   [] define count func
+ * [] add streaming
+ *  [] have post-order binary encoding
+ *    [] post oder parse specail tokens
+ *       . LEAF
+ *       . NODE
+ *       . ROOT
  */
 'use strict'
 const parser = require('wast-parser')
@@ -88,17 +93,21 @@ function meteringTransform (vertex, startIndex) {
     // inject the metering statement
     addGasCountBlock(result.gas, vertex, startIndex)
   }
+  return result
 }
 
 // travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  const dontCount = new Set(['local', 'identifier', 'literal', 'param', 'then', 'else', 'array'])
+  const dontCount = new Set(['local', 'identifier', 'literal', 'param', 'then', 'else', 'array', 'unreachable'])
+  // if(!dontCount.has(kind))
+  //   console.log(kind)
 
   if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
     let then = vertex.get('then')
     let els = vertex.get('else')
+    let hasBranch = false
     if (then.kind !== 'then' && then.kind !== 'block') {
       // adds a `then` block that already exist implicitly
       const statement = then.copy()
@@ -112,14 +121,15 @@ function calcGas (vertex, startIndex) {
       els.get('body').unshift(statement)
       vertex.set('else', els)
     }
-    meteringTransform(then)
+    hasBranch = meteringTransform(then).branchPoint
     if (els) {
-      meteringTransform(els)
+      hasBranch |= meteringTransform(els)
     }
 
     // calculates the gas for the test statement
     const result = calcGas(vertex.edges.get('test'), 0)
     result.gas++
+    result.branchPoint = hasBranch
     return result
   } else {
     const retVal = {
