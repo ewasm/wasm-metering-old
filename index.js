@@ -5,14 +5,7 @@
  * if a break condition happens in a block then the block can be though of
  * as two sperate subtrees
  *
- * 1) if br's are found inject `addGas` in the next insertion point
- *  insertion point is beging of next block
- *  or the adding or encapsolation the last statment
- *
  * TODO
- * [*] fix breaks
- *    [*] inject at leafs
- * [*] fix select
  * [] run test suite
  * [] add memory count
  *   [] define count func
