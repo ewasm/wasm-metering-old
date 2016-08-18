@@ -23,7 +23,7 @@ const AST = require('wast-graph')
 let addGasIndex // a messy global
 
 // adds the import statement for the Ethereum system module
-// '(import "ethereum" "gasAdd" (param i32))'
+// '(import "ethereum" "useGas" (param i32))'
 function addImport (rootNode) {
   const json = {
     kind: 'import',
@@ -33,7 +33,7 @@ function addImport (rootNode) {
     },
     funcName: {
       kind: 'literal',
-      value: 'gasAdd'
+      value: 'useGas'
     },
     type: null,
     params: [{

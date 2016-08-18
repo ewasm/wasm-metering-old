@@ -13,7 +13,7 @@ tape('basic', function (t) {
     (call_import 0
       (i32.const 2))
     (i64.const 1))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
@@ -42,7 +42,7 @@ tape('if', function (t) {
         (call_import 0
           (i32.const 1))
         (i64.const 1))))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
@@ -76,7 +76,7 @@ tape('if_else', function (t) {
         (call_import 0
           (i32.const 1))
         (i64.const 1))))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
@@ -111,7 +111,7 @@ tape('if_else', function (t) {
         (call_import 0
           (i32.const 1))
         (i64.const 1))))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
@@ -158,7 +158,7 @@ tape('imports', function (t) {
         (i32.const 2))
       (call_import $print
         (i32.const 2))))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
   const result = injector.injectWAST(testWast, 2)
   t.equals(result, expected)
@@ -265,7 +265,7 @@ tape('br_table', function (t) {
       (i32.const 2))
     (return
       (get_local $j)))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
@@ -276,7 +276,7 @@ tape('br_table', function (t) {
 tape('for with break', function (t) {
   const testWast =
 `(module
-  (import $gasUsed  "ethereum" "gasUsed"  (result i64))
+  (import $gasUsed  "ethereum" "getGasLeft"  (result i64))
   (export "test" 0)
   (func (result i32) ;; +2
     (block ;; +1
@@ -290,7 +290,7 @@ tape('for with break', function (t) {
 
   const resultWast =
 `(module
-  (import $gasUsed "ethereum" "gasUsed")
+  (import $gasUsed "ethereum" "getGasLeft")
   (export "test" 0)
   (func
     (result i32)
@@ -308,7 +308,7 @@ tape('for with break', function (t) {
       (call_import 1
         (i32.const 1))
       (i64.const 6)))
-  (import "ethereum" "gasAdd"
+  (import "ethereum" "useGas"
     (param i32)))`
 
   const result = injector.injectWAST(testWast, 2)
