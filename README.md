@@ -1,7 +1,7 @@
 # SYNOPSIS 
 [![NPM Package](https://img.shields.io/npm/v/wasm-metering.svg?style=flat-square)](https://www.npmjs.org/package/wasm-metering)
-[![Build Status](https://img.shields.io/travis/wanderer/wasm-metering.svg?branch=master&style=flat-square)](https://travis-ci.org/wanderer/wasm-metering)
-[![Coverage Status](https://img.shields.io/coveralls/wanderer/wasm-metering.svg?style=flat-square)](https://coveralls.io/r/wanderer/wasm-metering)
+[![Build Status](https://img.shields.io/travis/ewasm/wasm-metering.svg?branch=master&style=flat-square)](https://travis-ci.org/ewasm/wasm-metering)
+[![Coverage Status](https://img.shields.io/coveralls/ewasm/wasm-metering.svg?style=flat-square)](https://coveralls.io/r/ewasm/wasm-metering)
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)  
 
@@ -47,7 +47,7 @@ then invoke
 # API
 ## injectJSON
 
-[index.js:169-181](https://github.com/wanderer/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L169-L181 "Source code on GitHub")
+[index.js:169-181](https://github.com/ewasm/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L169-L181 "Source code on GitHub")
 
 Injects metering into the json ast
 
@@ -57,7 +57,7 @@ Injects metering into the json ast
 
 ## injectWAST
 
-[index.js:155-163](https://github.com/wanderer/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L155-L163 "Source code on GitHub")
+[index.js:155-163](https://github.com/ewasm/wasm-metering/blob/f59127389d75fb8c3c468fe5e611c34f8ff1868f/index.js#L155-L163 "Source code on GitHub")
 
 Inject metering into wasm text
 
