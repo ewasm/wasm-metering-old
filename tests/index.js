@@ -326,7 +326,7 @@ tape('loops', function (t) {
 
   const resultWast =
 `(module
-  (func
+  (func "singular"
     (result i32)
     (call_import 0
       (i32.const 4))
