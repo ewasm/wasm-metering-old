@@ -95,8 +95,14 @@ function calcGas (vertex, startIndex) {
   const dontCount = new Set(['local', 'identifier', 'literal', 'param', 'then', 'else', 'array', 'unreachable'])
   // if(!dontCount.has(kind))
   //   console.log(kind)
-
-  if (kind === 'if') {
+  if (kind === 'loop') {
+    let body = vertex.get('body')
+    let hasBranch = meteringTransform(body).branchPoint
+    return {
+      branchPoint: hasBranch,
+      gas: 1
+    }
+  } else if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
     let then = vertex.get('then')
     let els = vertex.get('else')
