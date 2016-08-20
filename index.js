@@ -20,6 +20,7 @@
 const parser = require('wast-parser')
 const codegen = require('wast-codegen')
 const AST = require('wast-graph')
+const gasTable = require('./gastable.json')
 let addGasIndex // a messy global
 
 // adds the import statement for the Ethereum system module
@@ -89,35 +90,8 @@ function meteringTransform (vertex, startIndex) {
   return result
 }
 
-// This is counted in particles (precise gas)
-const gasTable = {
-  // do not count these
-  'local': 0,
-  'identifier': 0,
-  'literal': 0,
-  'param': 0,
-  'then': 0,
-  'else': 0,
-  'array': 0,
-  'unreachable': 0,
-
-  // instructions
-  'get_local': 120,
-  'set_local': 120,
-  'tee_local': 120,
-  'get_global': 120,
-  'set_global': 120,
-  'i32.load8_s': 120,
-  'i32.load': 120,
-  'i64.load': 120,
-  'i32.store': 120,
-  'i64.store': 120,
-
-  'loop': 1,
-}
-
 function getInstructionGas (vertex) {
-  return gastable[vertex.kind] || 1
+  return gasTable[vertex.kind] || 1
 }
 
 // travers a subtree and counts
