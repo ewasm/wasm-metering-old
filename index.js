@@ -91,7 +91,35 @@ function meteringTransform (vertex, startIndex) {
 }
 
 function getInstructionGas (vertex) {
-  return gasTable[vertex.kind] || 1
+  let kind = vertex.kind
+
+  if (kind === 'binop' || kind === 'unop' || kind === 'relop') {
+    kind = vertex._value.type + '.' + vertex._value.operator
+  }
+
+  if (kind === 'cvtop') {
+    kind = vertex._value.type + '.' + vertex._value.operator + '/' + vertex._value.type1
+  }
+
+  if (kind === 'store' || kind === 'load') {
+    kind = vertex._value.type + '.' + vertex._value.kind
+    if (vertex._value.size !== null) {
+      // store8 needs special handling
+      if (kind !== 'store' && vertex._value.size !== 8) {
+        kind += vertex._value.size + (vertex._value.sign ? '_s' : '_u')
+      }
+    }
+  }
+
+  if (kind === 'const') {
+    kind = vertex._value.type + '.' + vertex._value.kind
+  }
+
+  if (gasTable[kind] === undefined) {
+    throw new Error('Unsupported instruction: ' + kind)
+  }
+
+  return gasTable[kind]
 }
 
 // travers a subtree and counts
