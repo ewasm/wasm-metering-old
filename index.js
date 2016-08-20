@@ -116,6 +116,10 @@ const gasTable = {
   'loop': 1,
 }
 
+function getInstructionGas (vertex) {
+  return gastable[vertex.kind] || 1
+}
+
 // travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
@@ -124,7 +128,7 @@ function calcGas (vertex, startIndex) {
     let hasBranch = meteringTransform(body).branchPoint
     return {
       branchPoint: hasBranch,
-      gasTable['loop'] || 1
+      gas: getInstructionGas(vertex)
     }
   } else if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
@@ -151,12 +155,12 @@ function calcGas (vertex, startIndex) {
 
     // calculates the gas for the test statement
     const result = calcGas(vertex.edges.get('test'), 0)
-    result.gas += gasTable['if'] || 1
+    result.gas += getInstructionGas(vertex)
     result.branchPoint = hasBranch
     return result
   } else {
     const retVal = {
-      gas: gasTable[kind] || 1,
+      gas: getInstructionGas(vertex),
       branchPoint: vertex.isBranch
     }
 
