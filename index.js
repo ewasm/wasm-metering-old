@@ -89,18 +89,42 @@ function meteringTransform (vertex, startIndex) {
   return result
 }
 
+// This is counted in particles (precise gas)
+const gasTable = {
+  // do not count these
+  'local': 0,
+  'identifier': 0,
+  'literal': 0,
+  'param': 0,
+  'then': 0,
+  'else': 0,
+  'array': 0,
+  'unreachable': 0,
+
+  // instructions
+  'get_local': 120,
+  'set_local': 120,
+  'tee_local': 120,
+  'get_global': 120,
+  'set_global': 120,
+  'i32.load8_s': 120,
+  'i32.load': 120,
+  'i64.load': 120,
+  'i32.store': 120,
+  'i64.store': 120,
+
+  'loop': 1,
+}
+
 // travers a subtree and counts
 function calcGas (vertex, startIndex) {
   const kind = vertex.kind
-  const dontCount = new Set(['local', 'identifier', 'literal', 'param', 'then', 'else', 'array', 'unreachable'])
-  // if(!dontCount.has(kind))
-  //   console.log(kind)
   if (kind === 'loop') {
     let body = vertex.get('body')
     let hasBranch = meteringTransform(body).branchPoint
     return {
       branchPoint: hasBranch,
-      gas: 1
+      gasTable['loop'] || 1
     }
   } else if (kind === 'if') {
     // splits a if statement into two subtrees (then and else)
@@ -127,12 +151,12 @@ function calcGas (vertex, startIndex) {
 
     // calculates the gas for the test statement
     const result = calcGas(vertex.edges.get('test'), 0)
-    result.gas++
+    result.gas += gasTable['if'] || 1
     result.branchPoint = hasBranch
     return result
   } else {
     const retVal = {
-      gas: ~~!dontCount.has(kind),
+      gas: gasTable[kind] || 1,
       branchPoint: vertex.isBranch
     }
 
