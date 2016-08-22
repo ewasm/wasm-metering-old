@@ -115,6 +115,12 @@ function getInstructionGas (vertex) {
     kind = vertex._value.type + '.' + vertex._value.kind
   }
 
+  if (kind === 'grow_memory') {
+    let pageCost = 0
+    // FIXME: actually calculate page cost
+    return gasTable['grow_memory'] + pageCost
+  }
+
   if (gasTable[kind] === undefined) {
     throw new Error('Unsupported instruction: ' + kind)
   }
