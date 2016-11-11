@@ -21,7 +21,7 @@
     "yargs": "^6.3.0"
   },
   "devDependencies": {
-    "coveralls": "^2.11.9",
+    "coveralls": "^2.11.15",
     "istanbul": "^0.4.2",
     "standard": "^8.5.0",
     "tape": "^4.5.1"
