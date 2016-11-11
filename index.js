@@ -94,10 +94,19 @@ function getInstructionGas (vertex) {
   let kind = vertex.kind
 
   if (kind === 'binop' || kind === 'unop' || kind === 'relop') {
+    if (vertex._value.type === 'f32' || vertex._value.type === 'f64') {
+      throw new Error('Disallowed type: ' + vertex._value.type)
+    }
+
     kind = vertex._value.type + '.' + vertex._value.operator
   }
 
   if (kind === 'cvtop') {
+    if (vertex._value.type === 'f32' || vertex._value.type === 'f64' ||
+       vertex._value.type1 === 'f32' || vertex._value.type1 === 'f64') {
+      throw new Error('Disallowed type: ' + vertex._value.type)
+    }
+
     kind = vertex._value.type + '.' + vertex._value.operator + '/' + vertex._value.type1
   }
 
@@ -112,6 +121,10 @@ function getInstructionGas (vertex) {
   }
 
   if (kind === 'const') {
+    if (vertex._value.type === 'f32' || vertex._value.type === 'f64') {
+      throw new Error('Disallowed type: ' + vertex._value.type)
+    }
+
     kind = vertex._value.type + '.' + vertex._value.kind
   }
 
