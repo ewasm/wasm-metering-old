@@ -25,7 +25,7 @@
                 (set_local $j (i32.sub (i32.const 0) (get_local $i)))
                 (br $switch)
               ) ;; 4
-              (br $AHAAHAHA)
+              (br 2)
             ) ;; 5
             (set_local $j (i32.const 101))
             (br $switch)
