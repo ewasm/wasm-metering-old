@@ -1,3 +1,5 @@
+# [DEPRECATED; GO HERE](https://github.com/ewasm/wasm-metering)
+
 # SYNOPSIS 
 [![NPM Package](https://img.shields.io/npm/v/wasm-metering.svg?style=flat-square)](https://www.npmjs.org/package/wasm-metering)
 [![Build Status](https://img.shields.io/travis/ewasm/wasm-metering.svg?branch=master&style=flat-square)](https://travis-ci.org/ewasm/wasm-metering)
